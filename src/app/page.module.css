@@ -26,10 +26,10 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(-3.5deg);
   width: 600px;
   height: 400px;
-  will-change: width, height, clip-path;
+  will-change: width, height, clip-path, transform;
   pointer-events: none;
   overflow: hidden;
   border-radius: 12px;
@@ -55,7 +55,7 @@
 .card {
   position: absolute;
   width: clamp(220px, 28vw, 420px);
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   overflow: hidden;
@@ -118,7 +118,6 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: var(--space-4);
   max-width: 100%;
   overflow: hidden;
 }
@@ -160,4 +159,102 @@
   position: relative;
   overflow: visible;
   flex-shrink: 0;
+}
+
+.portfolio {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: clip;
+}
+
+.portfolioTitleWrapper {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marqueeItem {
+  flex-shrink: 0;
+  padding-right: var(--space-8);
+}
+
+.marqueeItem svg {
+  height: clamp(80px, 15vw, 200px);
+  width: auto;
+}
+
+.portfolioStack {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portfolioImageWrapper {
+  position: absolute;
+  overflow: hidden;
+  will-change: width, height, border-radius, transform;
+  --overlay-opacity: 0;
+}
+
+.portfolioImageWrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--overlay-opacity));
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.1s ease-out;
+}
+
+/* First image starts small */
+.portfolioImageWrapper:nth-child(1) {
+  z-index: 1;
+  width: 600px;
+  max-width: calc(100% - 2 * clamp(var(--space-4), 8.17vi + -0.74rem, var(--space-20)));
+  height: 400px;
+  border-radius: 12px;
+  clip-path: inset(0% 0% 0% 0%);
+}
+
+/* Second and third start full size but off-screen */
+.portfolioImageWrapper:nth-child(2) {
+  z-index: 2;
+  width: calc(100% - 2 * clamp(var(--space-4), 8.17vi + -0.74rem, var(--space-20)));
+  height: 100vh;
+  border-radius: 0;
+  transform: translateY(100vh);
+}
+
+.portfolioImageWrapper:nth-child(2) > img {
+  transform: translateY(30%) scale(1.2);
+  transition: none;
+}
+
+.portfolioImageWrapper:nth-child(3) {
+  z-index: 3;
+  width: calc(100% - 2 * clamp(var(--space-4), 8.17vi + -0.74rem, var(--space-20)));
+  height: 100vh;
+  border-radius: 0;
+  transform: translateY(100vh);
+}
+
+.portfolioImageWrapper:nth-child(3) > img {
+  transform: translateY(30%) scale(1.2);
+  transition: none;
 }

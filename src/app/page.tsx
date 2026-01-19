@@ -5,6 +5,7 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import Image from "next/image";
 import LogoTitle from "@/components/LogoTitle";
+import LatestWorks from "@/components/LatestWorks";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -13,8 +14,19 @@ export default function Home() {
   const videoSlotRef = useRef<HTMLSpanElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const titleInnerRef = useRef<HTMLSpanElement | null>(null);
+  const portfolioRef = useRef<HTMLElement | null>(null);
+  const marqueeRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    // Prevent browser from restoring scroll position on refresh
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    // Block scroll immediately and reset position
+    document.documentElement.classList.add("no-scroll");
+    window.scrollTo(0, 0);
+
     gsap.registerPlugin(ScrollTrigger);
 
     const lenis = new Lenis({
@@ -41,6 +53,7 @@ export default function Home() {
       const hero = heroRef.current!;
       const headline = headlineRef.current!;
       const titleInner = titleInnerRef.current!;
+      const portfolio = portfolioRef.current!;
       let isVideoInSlot = false;
 
       // Dynamic measurements
@@ -74,7 +87,8 @@ export default function Home() {
 
       // Function to setup scroll animations (called after intro completes)
       const setupScrollAnimations = () => {
-        // Re-enable scroll
+        // Re-enable scroll and remove overflow lock
+        document.documentElement.classList.remove("no-scroll");
         lenis.start();
 
         // Make cards visible now that intro is complete
@@ -255,6 +269,106 @@ export default function Home() {
             });
           },
         });
+
+        // PORTFOLIO: Stacking images animation
+        const portfolioImages = gsap.utils.toArray<HTMLDivElement>("[data-portfolio]");
+        const img1 = portfolioImages[0];
+        const img2 = portfolioImages[1];
+        const img3 = portfolioImages[2];
+
+        // Get inner images for parallax effect
+        const img2Inner = img2.querySelector("img");
+        const img3Inner = img3.querySelector("img");
+
+        // Calculate container content width (excluding padding)
+        const portfolioStack = portfolio.querySelector(`.${styles.portfolioStack}`) as HTMLElement;
+        const stackStyles = getComputedStyle(portfolioStack);
+        const stackPaddingLeft = parseFloat(stackStyles.paddingLeft);
+        const stackPaddingRight = parseFloat(stackStyles.paddingRight);
+        const containerContentWidth = portfolioStack.clientWidth - stackPaddingLeft - stackPaddingRight;
+
+        const portfolioTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: portfolio,
+            start: "top top",
+            end: `+=${vh * 2.5}`,
+            pin: true,
+            scrub: 0.5,
+            pinSpacing: true,
+          },
+        });
+
+        // Phase 1: First image expands from small to container width
+        portfolioTl.to(img1, {
+          width: containerContentWidth,
+          height: vh,
+          borderRadius: 0,
+          ease: "none",
+          duration: 1,
+        });
+
+        // Phase 2: Second image slides up with stronger parallax on inner image
+        portfolioTl.to(img2, {
+          y: 0,
+          ease: "none",
+          duration: 1,
+        }, "+=0");
+
+        // Stronger parallax: inner image moves significantly slower, ends at scale 1
+        portfolioTl.to(img2Inner, {
+          y: 0,
+          scale: 1,
+          ease: "none",
+          duration: 1,
+        }, "<");
+
+        // Clip-path horizontal squeeze instead of scale
+        portfolioTl.to(img1, {
+          clipPath: "inset(0% 5% 0% 5%)",
+          "--overlay-opacity": 0.6,
+          ease: "none",
+          duration: 1,
+        }, "<");
+
+        // Phase 3: Third image slides up with stronger parallax
+        portfolioTl.to(img3, {
+          y: 0,
+          ease: "none",
+          duration: 1,
+        });
+
+        // Stronger parallax: inner image moves significantly slower, ends at scale 1
+        portfolioTl.to(img3Inner, {
+          y: 0,
+          scale: 1,
+          ease: "none",
+          duration: 1,
+        }, "<");
+
+        // Clip-path horizontal squeeze instead of scale
+        portfolioTl.to(img2, {
+          clipPath: "inset(0% 5% 0% 5%)",
+          "--overlay-opacity": 0.6,
+          ease: "none",
+          duration: 1,
+        }, "<");
+
+        // MARQUEE: Infinite horizontal scroll
+        const marquee = marqueeRef.current;
+        if (marquee) {
+          const marqueeItems = marquee.querySelectorAll(`.${styles.marqueeItem}`);
+          if (marqueeItems.length > 0) {
+            const firstItem = marqueeItems[0] as HTMLElement;
+            const itemWidth = firstItem.offsetWidth;
+
+            gsap.to(marquee, {
+              x: -itemWidth,
+              duration: 20,
+              ease: "none",
+              repeat: -1,
+            });
+          }
+        }
       };
 
       // INTRO: Video expands from small to fullscreen, then SVG reveals
@@ -275,11 +389,12 @@ export default function Home() {
         }
       });
 
-      // Expand video from small (600x400) to fullscreen
+      // Expand video from small (600x400) to fullscreen, rotation goes to 0
       introTl.to(videoWrap, {
         width: "100vw",
         height: "100vh",
         borderRadius: 0,
+        rotation: 0,
         duration: 1.5,
         ease: "power2.inOut",
       });
@@ -329,7 +444,7 @@ export default function Home() {
       <section ref={heroRef} className={styles.hero}>
         <div className={styles.imageRail}>
           <div data-card className={`${styles.card} ${styles.leftTop}`}>
-            <Image src="/images/Homepage_Image_1.jpg" alt="Paesaggio 1" fill sizes="(max-width: 600px) 44vw, 28vw" style={{ objectFit: "cover" }} />
+            <Image src="/images/daniel.avif" alt="Paesaggio 1" fill sizes="(max-width: 600px) 44vw, 28vw" style={{ objectFit: "cover" }} />
           </div>
           <div data-card className={`${styles.card} ${styles.leftBottom}`}>
             <Image src="/images/Homepage_Image_2.jpg" alt="Paesaggio 2" fill sizes="(max-width: 600px) 44vw, 28vw" style={{ objectFit: "cover" }} />
@@ -356,8 +471,30 @@ export default function Home() {
           </span>
         </h2>
       </section>
-      <section style={{height: "100vh" }}>
 
+      <section ref={portfolioRef} className={`${styles.portfolio}`}>
+        <div className={styles.portfolioTitleWrapper}>
+          <h2>
+            <span className="sr-only">Latest works</span>
+            <div ref={marqueeRef} className={styles.marquee}>
+              <span className={styles.marqueeItem}><LatestWorks fill="var(--foreground)" /></span>
+              <span className={styles.marqueeItem}><LatestWorks fill="var(--foreground)" /></span>
+              <span className={styles.marqueeItem}><LatestWorks fill="var(--foreground)" /></span>
+              <span className={styles.marqueeItem}><LatestWorks fill="var(--foreground)" /></span>
+            </div>
+          </h2>
+        </div>
+        <div className={styles.portfolioStack}>
+          <div data-portfolio="1" className={styles.portfolioImageWrapper}>
+            <Image src="/images/portfolio1.png" alt="Portfolio 1" fill sizes="100%" style={{ objectFit: "cover" }} />
+          </div>
+          <div data-portfolio="2" className={styles.portfolioImageWrapper}>
+            <Image src="/images/portfolio2.png" alt="Portfolio 2" fill sizes="100%" style={{ objectFit: "cover" }} />
+          </div>
+          <div data-portfolio="3" className={styles.portfolioImageWrapper}>
+            <Image src="/images/portfolio3.png" alt="Portfolio 3" fill sizes="100v%" style={{ objectFit: "cover" }} />
+          </div>
+        </div>
       </section>
     </main>
   );
